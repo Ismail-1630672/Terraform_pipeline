@@ -1,0 +1,54 @@
+name: Automated linting tests and formatting of terraform code for deployment
+
+on: [push]
+
+jobs:
+  terraform:
+    name: automating linting, formatting and deployment
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: "eu-west-2"
+      TF_VERSION: "1.13.4"
+      TFLINT_VERSION: "0.59.1"
+
+    steps:
+      - name: Checkout github repository
+        uses: actions/checkout@v2
+
+      - name: Configure AWS creditentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: set up terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: install tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      - name: do terraform init
+        run: terraform init
+
+      - name: do terraform format
+        run: terraform fmt
+
+      - name: do terraform validate
+        run: terraform validate
+
+      - name: do tflint
+        run: |
+          tflint --init
+          tflint
+
+      - name: do terraform plan
+        run: terraform plan -out=tfplan
+
+      - name: do terraform apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
