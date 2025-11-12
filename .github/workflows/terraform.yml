@@ -33,7 +33,8 @@ jobs:
 
       - name: install tflint
         run: |
-          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          curl -sLo tflint.zip https://github.com/terraform-linters/tflint/releases/download/v${{ env.TFLINT_VERSION }}/tflint_linux_amd64.zip
+          unzip tflint.zip -d /usr/local/bin/
 
       - name: do terraform init
         run: terraform init
